@@ -3,6 +3,7 @@ import osmnx as ox
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+import pandas as pd
 from shapely.geometry import LineString
 
 def perturb_graph(G, pos, epsilon=0.1):
@@ -46,12 +47,11 @@ def plot_graph(G, pos, title, filename):
     plt.close()
 
 def main():
-
     # Define output directory for plots
-    oputput_dir = "simulation-project/output"
-    if not os.path.exists(oputput_dir):
-        os.makedirs(oputput_dir)
-
+    output_dir = "simulation-project/output"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
     # Create a grid graph
     n_rows, n_cols = 10, 10
     G = nx.grid_2d_graph(n_rows, n_cols)
@@ -71,21 +71,29 @@ def main():
     
     # Save initial orientation plot
     fig, ax = ox.plot_orientation(initial_G)
-    fig.savefig(f"{oputput_dir}/initial_orientation.png")
+    fig.savefig(f"{output_dir}/initial_orientation.png")
     plt.close(fig)
-    plot_graph(initial_G, initial_position, "Initial Grid Graph", f"{oputput_dir}/initial_grid.png")
+    plot_graph(initial_G, initial_position, "Initial Grid Graph", f"{output_dir}/initial_grid.png")
     
-    # Perturb the network
-    perturbed_position = perturb_graph(G, initial_position, epsilon=0.5)
-    perturbed_G = calculate_edge_attributes(G, perturbed_position)
+    # Run perturbations with varying epsilon
+    results = []
+    for i, epsilon in enumerate(np.arange(0.1, 1.1, 0.1), start=1):
+        perturbed_position = perturb_graph(G, initial_position, epsilon=epsilon)
+        perturbed_G = calculate_edge_attributes(G, perturbed_position)
+        entropy_perturbed = ox.bearing.orientation_entropy(perturbed_G)
+        results.append([epsilon, entropy_perturbed])
+        
+        # Save perturbed orientation plot
+        fig, ax = ox.plot_orientation(perturbed_G)
+        fig.savefig(f"{output_dir}/perturbed_orientation_{i}.png")
+        plt.close(fig)
+        
+        plot_graph(perturbed_G, perturbed_position, f"Perturbed Grid Graph (ε={epsilon:.1f})", f"{output_dir}/perturbed_grid_{i}.png")
     
-    entropy_perturbed = ox.bearing.orientation_entropy(perturbed_G)
-    
-    # Save perturbed orientation plot
-    fig, ax = ox.plot_orientation(initial_G)
-    fig.savefig(f"{oputput_dir}/perturbed_orientation.png")
-    plt.close(fig)
-    plot_graph(perturbed_G, perturbed_position, "Perturbed Grid Graph", f"{oputput_dir}/perturbed_grid.png")
+    # Save results to Excel
+    df = pd.DataFrame(results, columns=["Epsilon", "Entropy"])
+    df.to_excel(f"{output_dir}/entropy_results.xlsx", index=False)
+    print("Simulation completed. Results saved in entropy_results.xlsx")
 
 if __name__ == "__main__":
     main()
