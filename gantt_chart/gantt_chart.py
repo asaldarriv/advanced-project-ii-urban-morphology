@@ -4,19 +4,19 @@ import matplotlib.pyplot as plt
 
 # Define activities, their periods in weeks, and completion percentage
 tasks = [
-    ("State of the Art Review", 1, 5, 80),
-    ("Data Collection and Processing", 4, 5, 50),
-    ("Calculation of Geometric and Topological Metrics", 6, 8, 0),
+    ("State of the Art Review", 1, 5, 100),
+    ("Data Collection and Processing", 4, 5, 100),
+    ("Calculation of Geometric and Topological Metrics", 6, 8, 70),
     ("Pattern Analysis with Machine Learning", 9, 13, 0),
     ("Development of Visualization Tools", 14, 15, 0),
     ("Validation in Colombian Cities", 16, 17, 0),
     ("Preliminary Project Development and Delivery", 1, 4, 100),
     ("Preliminary Project Presentation", 4, 4, 100),
-    ("Progress Report 1", 5, 8, 0),
+    ("Progress Report 1", 5, 8, 100),
     ("Progress Report 2", 9, 14, 0),
     ("Final Report Advisory", 15, 16, 0),
-    ("Final Report Development and Delivery", 15, 18, 0),
-    ("Final Report Presentation", 18, 18, 0),
+    ("Final Report Development and Delivery", 6, 18, 0),
+    ("Final Report Presentation", 17, 18, 0),
 ]
 
 # Create a DataFrame with activities, their periods in weeks, and completion percentage
