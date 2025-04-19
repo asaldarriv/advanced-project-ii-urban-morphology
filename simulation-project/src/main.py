@@ -4,13 +4,19 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.stats import truncnorm
 from shapely.geometry import LineString
 
-def perturb_graph(G, pos, epsilon=0.1):
-    """Perturb node positions randomly within a controlled range."""
-    return {node: (x + np.random.uniform(-epsilon, epsilon), 
-                   y + np.random.uniform(-epsilon, epsilon)) 
-            for node, (x, y) in pos.items()}
+def perturb_graph(G, pos, sigma):
+    """Perturb node positions using truncated normal distribution."""
+    a, b = -3, 3  # truncate to ±3σ
+    return {
+        node: (
+            x + truncnorm.rvs(a, b, loc=0, scale=sigma),
+            y + truncnorm.rvs(a, b, loc=0, scale=sigma)
+        )
+        for node, (x, y) in pos.items()
+    }
 
 def calculate_edge_attributes(G, pos):
     """Assign length, geometry, and bearing attributes to graph edges."""
@@ -77,21 +83,22 @@ def main():
     
     # Run perturbations with varying epsilon
     results = []
-    for i, epsilon in enumerate(np.arange(0.1, 1.1, 0.1), start=1):
-        perturbed_position = perturb_graph(G, initial_position, epsilon=epsilon)
+    sigmas = np.arange(0.01, 0.55, 0.01)
+
+    for i, sigma in enumerate(sigmas, start=1):
+        perturbed_position = perturb_graph(G, initial_position, sigma=sigma)
         perturbed_G = calculate_edge_attributes(G, perturbed_position)
         entropy_perturbed = ox.bearing.orientation_entropy(perturbed_G)
-        results.append([epsilon, entropy_perturbed])
+        results.append([sigma, entropy_perturbed])
         
-        # Save perturbed orientation plot
         fig, ax = ox.plot_orientation(perturbed_G)
         fig.savefig(f"{output_dir}/perturbed_orientation_{i}.png")
         plt.close(fig)
         
-        plot_graph(perturbed_G, perturbed_position, f"Perturbed Grid Graph (ε={epsilon:.1f})", f"{output_dir}/perturbed_grid_{i}.png")
+        plot_graph(perturbed_G, perturbed_position, f"Perturbed Grid Graph (σ={sigma:.2f})", f"{output_dir}/perturbed_grid_{i}.png")
     
     # Save results to Excel
-    df = pd.DataFrame(results, columns=["Epsilon", "Entropy"])
+    df = pd.DataFrame(results, columns=["Sigma", "Entropy"])
     df.to_excel(f"{output_dir}/entropy_results.xlsx", index=False)
     print("Simulation completed. Results saved in entropy_results.xlsx")
 
