@@ -229,6 +229,42 @@ def plot_entropy_violin_grouped(df, output_path, bin_size=0.01):
     plt.savefig(output_path)
     plt.close()
 
+# ------------------------------
+# STEP 5 (OPTIONAL): GRAPH EXPORT
+# ------------------------------
+
+def generate_representative_graphs(
+    sigmas_to_plot,
+    repetition_to_use,
+    output_dir="simulation-project/output/representative_graphs"
+):
+    """
+    Generate and save the graph and polar orientation histogram for selected sigma values
+    at a given repetition index, without rerunning the full simulation.
+    """
+    # Setup base graph and positions
+    G_base = create_base_graph()
+    initial_position = center_node_positions(G_base)
+    G_base = assign_node_attributes(G_base, initial_position)
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    for sigma in sigmas_to_plot:
+        G = deepcopy(G_base)
+        perturbed_pos = perturb_graph(G, initial_position, sigma=sigma)
+        G = calculate_edge_attributes(G, perturbed_pos)
+
+        sigma_folder = os.path.join(output_dir, f"sigma_{sigma:.3f}")
+        os.makedirs(sigma_folder, exist_ok=True)
+
+        plot_graph(G, perturbed_pos, f"Perturbed Grid (σ={sigma:.3f})", os.path.join(sigma_folder, "graph.png"))
+
+        fig, ax = ox.plot_orientation(G)
+        fig.savefig(os.path.join(sigma_folder, "polar_orientation.png"))
+        plt.close(fig)
+
+    print(f"Representative graphs saved to: {output_dir}")    
+
 
 
 # -----------------
@@ -256,21 +292,28 @@ def main(rerun_simulation=True):
     plt.close(fig)
     plot_graph(G, initial_position, "Initial Grid Graph", f"{output_dir}/initial_grid.png")
 
-    # Step 3: Define experiment parameters
+    # Step 3: Define experiment parameters and run simulation
     n_repeats = 30
     sigmas = np.round(np.arange(0.017, 0.5, 0.001), 3)
     results_path = f"{output_dir}/entropy_results_multiple.xlsx"
 
-    # Step 4: Run or load entropy simulation
     df = simulate_entropy(G, initial_position, sigmas, n_repeats, results_path, rerun_simulation)
 
-    # Step 5: Analyze and visualize results
+    # Step 4: Analyze and visualize results
     plot_entropy_boxplot(df, sigmas, f"{output_dir}/entropy_boxplot.png")
     plot_entropy_mean_std(df, f"{output_dir}/entropy_lineplot.png")
     plot_entropy_boxplot_grouped(df, f"{output_dir}/entropy_boxplot_grouped.png")
     plot_entropy_violin_grouped(df, f"{output_dir}/entropy_violinplot_grouped.png")
-    print("Analysis complete. Results saved.")
 
+    # Step 6 optional: Generate representative graphs for specific sigmas
+    representative_sigmas = [0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35]
+    generate_representative_graphs(
+        sigmas_to_plot=representative_sigmas,
+        repetition_to_use=0,
+        output_dir=os.path.join(output_dir, "representative_graphs")
+    )
+
+    print("Analysis complete. Results saved.")
 
 if __name__ == "__main__":
     main(rerun_simulation=False)
