@@ -157,7 +157,7 @@ def plot_entropy_boxplot(df, sigmas, output_path):
     Create and save a boxplot of entropy values per sigma.
     """
     plt.figure(figsize=(10, 6))
-    sns.violinplot(x="Sigma_bin", y="Entropy", data=df, inner="quartile", color="lightgreen")
+    sns.boxplot(x="Sigma", y="Entropy", data=df, color='lightblue')
     plt.title("Orientation Entropy vs. Perturbation Level (σ)")
     plt.xlabel("Sigma (σ)")
     plt.ylabel("Orientation Entropy")
