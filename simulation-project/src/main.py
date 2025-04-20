@@ -168,6 +168,68 @@ def plot_entropy_boxplot(df, sigmas, output_path):
     plt.savefig(output_path)
     plt.close()
 
+def plot_entropy_mean_std(df, output_path):
+    """
+    Create and save a line plot of mean entropy per sigma with ±1 standard deviation as a shaded band.
+    """
+    summary = df.groupby("Sigma")["Entropy"].agg(["mean", "std"]).reset_index()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(summary["Sigma"], summary["mean"], label="Mean Entropy", color="blue")
+    plt.fill_between(
+        summary["Sigma"],
+        summary["mean"] - summary["std"],
+        summary["mean"] + summary["std"],
+        alpha=0.3,
+        color="blue",
+        label="±1 std dev"
+    )
+    plt.xlabel("Sigma (σ)")
+    plt.ylabel("Orientation Entropy")
+    plt.title("Mean Entropy vs. Perturbation Level (σ)")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+def plot_entropy_boxplot_grouped(df, output_path, bin_size=0.01):
+    """
+    Create and save grouped boxplots of entropy values by binning sigma values.
+    """
+    df_grouped = df.copy()
+    df_grouped["Sigma_bin"] = (df_grouped["Sigma"] // bin_size * bin_size).round(3)
+
+    plt.figure(figsize=(12, 6))
+    sns.boxplot(x="Sigma_bin", y="Entropy", data=df_grouped, color='skyblue')
+    plt.title(f"Entropy Boxplot Grouped by Sigma (bin size = {bin_size})")
+    plt.xlabel("Sigma (σ) Binned")
+    plt.ylabel("Orientation Entropy")
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+def plot_entropy_violin_grouped(df, output_path, bin_size=0.01):
+    """
+    Create and save violin plots of entropy values grouped by binned sigma values.
+    """
+    df_grouped = df.copy()
+    df_grouped["Sigma_bin"] = (df_grouped["Sigma"] // bin_size * bin_size).round(3)
+
+    plt.figure(figsize=(12, 6))
+    sns.violinplot(x="Sigma_bin", y="Entropy", data=df_grouped, inner="quartile", color="lightgreen")
+    plt.title(f"Entropy Violin Plot Grouped by Sigma (bin size = {bin_size})")
+    plt.xlabel("Sigma (σ) Binned")
+    plt.ylabel("Orientation Entropy")
+    plt.xticks(rotation=45)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+
+
 
 # -----------------
 # MAIN ENTRY POINT
@@ -204,6 +266,9 @@ def main(rerun_simulation=True):
 
     # Step 5: Analyze and visualize results
     plot_entropy_boxplot(df, sigmas, f"{output_dir}/entropy_boxplot.png")
+    plot_entropy_mean_std(df, f"{output_dir}/entropy_lineplot.png")
+    plot_entropy_boxplot_grouped(df, f"{output_dir}/entropy_boxplot_grouped.png")
+    plot_entropy_violin_grouped(df, f"{output_dir}/entropy_violinplot_grouped.png")
     print("Analysis complete. Results saved.")
 
 
